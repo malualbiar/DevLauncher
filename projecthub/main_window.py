@@ -38,10 +38,13 @@ class ProjectHub(QMainWindow, UIBuilderMixin, ProjectManagerMixin, ServerManager
         self.project_logs = {}      # project name -> accumulated log text
         self.browser_opened = set()  # project names that already auto-opened
         self.pending_restarts = set()  # project names mid-restart
+        self.project_cards = []     # project home-page cards
 
         self.load_projects()
         self.build_ui()
         self.refresh_table()
+        self.refresh_home_page()
+        self.stack.setCurrentWidget(self.home_page)
 
         # ------------------------------------------------------------
         # Server polling timer
@@ -51,6 +54,20 @@ class ProjectHub(QMainWindow, UIBuilderMixin, ProjectManagerMixin, ServerManager
         self.port_timer.setInterval(PORT_POLL_INTERVAL_MS)
         self.port_timer.timeout.connect(self.check_running_projects)
         self.port_timer.start()
+
+    def show_home_page(self):
+        self.stack.setCurrentWidget(self.home_page)
+
+    def show_manager_page(self, project=None):
+        self.stack.setCurrentWidget(self.manager_page)
+
+        if project is None or not hasattr(project, "name"):
+            return
+
+        for row, item in enumerate(self.projects):
+            if item.name == project.name:
+                self.table.setCurrentCell(row, 0)
+                break
 
     # ====================================================================
     # LOG

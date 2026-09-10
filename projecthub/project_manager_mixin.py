@@ -198,15 +198,29 @@ class ProjectManagerMixin:
 
             self.table.setCellWidget(row, 5, self._build_row_actions(project))
 
+        if hasattr(self, "refresh_home_page"):
+            self.refresh_home_page()
+
         self.update_button_states()
 
     def _build_row_actions(self, project):
         actions_widget = QWidget()
+        actions_widget.setStyleSheet("QWidget { background: transparent; }")
         actions_layout = QHBoxLayout(actions_widget)
         actions_layout.setContentsMargins(4, 2, 4, 2)
+        actions_layout.setSpacing(6)
 
         run_button = QPushButton("Run")
         stop_button = QPushButton("Stop")
+
+        for button in (run_button, stop_button):
+            button.setFixedHeight(28)
+            button.setMinimumWidth(70)
+            button.setStyleSheet(
+                "QPushButton { background: #1d2737; color: #e5e7eb; border: 1px solid #3a4b63; border-radius: 8px; font-size: 11px; font-weight: 600; padding: 0 8px; }"
+                "QPushButton:hover { background: #243149; }"
+                "QPushButton:disabled { background: #1b2433; color: #60708e; border: 1px solid #2b3b53; }"
+            )
 
         run_button.clicked.connect(
             lambda checked=False, p=project: self.start_project(p)
