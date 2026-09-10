@@ -1,6 +1,6 @@
 [Setup]
 AppName=ProjectHub
-AppVersion=1.0.0
+AppVersion=1.2.0
 DefaultDirName={commonpf64}\ProjectHub
 DefaultGroupName=ProjectHub
 OutputBaseFilename=ProjectHubSetup

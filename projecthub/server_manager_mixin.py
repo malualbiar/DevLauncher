@@ -10,7 +10,12 @@ from PySide6.QtWidgets import QMessageBox
 
 from .config import PROCESS_START_TIMEOUT_MS, SERVER_READY_MESSAGES
 from .network_utils import is_port_available
-from .process_utils import find_python_executable, kill_process_tree
+from .process_utils import (
+    build_activation_script,
+    build_process_environment,
+    find_python_executable,
+    kill_process_tree,
+)
 
 
 class ServerManagerMixin:
@@ -87,6 +92,18 @@ class ServerManagerMixin:
             f"{project.host}:{project.port}",
         ]
 
+        if os.name == "nt":
+            bat_script = build_activation_script(
+                project_path,
+                python_executable,
+                str(manage_py),
+                f"{project.host}:{project.port}",
+            )
+            self.log(f"[{project.name}] Launch script: {bat_script}")
+            if bat_script:
+                process.start("cmd.exe", ["/d", "/s", "/c", bat_script])
+                return
+
         process.start(python_executable, arguments)
 
         if not process.waitForStarted(PROCESS_START_TIMEOUT_MS):
@@ -106,16 +123,10 @@ class ServerManagerMixin:
         process.setWorkingDirectory(str(project_path))
 
         environment = process.processEnvironment()
-        environment.insert("PYTHONUNBUFFERED", "1")
+        clean_env = build_process_environment(project_path, os.environ)
 
-        current_python_path = environment.value("PYTHONPATH")
-
-        if current_python_path:
-            environment.insert(
-                "PYTHONPATH", f"{project_path}{os.pathsep}{current_python_path}"
-            )
-        else:
-            environment.insert("PYTHONPATH", str(project_path))
+        for key, value in clean_env.items():
+            environment.insert(key, str(value))
 
         process.setProcessEnvironment(environment)
 
