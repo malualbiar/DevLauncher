@@ -23,6 +23,20 @@ SERVER_READY_MESSAGES = [
     "System check identified no issues",
 ]
 
+# Substrings that indicate a Laravel artisan serve has finished starting.
+LARAVEL_READY_MESSAGES = [
+    "Development Server",         # "Laravel development server started"
+    "started on http",
+    "Press Ctrl+C to stop",
+]
+
+# Substrings that indicate the PHP built-in server is ready.
+PHP_READY_MESSAGES = [
+    "PHP",                        # "PHP X.Y.Z Development Server"
+    "started",
+    "Listening on",
+]
+
 # How often (ms) to poll running projects to detect readiness.
 PORT_POLL_INTERVAL_MS = 500
 

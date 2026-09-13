@@ -1,5 +1,5 @@
-"""Helpers for locating a project's Python interpreter and for
-forcefully killing a Django dev server's process tree (the dev server
+"""Helpers for locating a project's Python/PHP interpreter and for
+forcefully killing a dev server's process tree (the Django dev server
 spawns a reloader child process, so killing just the parent PID is not
 enough)."""
 
@@ -128,6 +128,91 @@ def build_activation_script(project_path, python_executable, manage_py, host_por
     script_handle.write(f'"{python_executable}" "{manage_py}" runserver "{host_port}"\r\n')
     script_handle.close()
 
+    return script_handle.name
+
+
+# ------------------------------------------------------------------ #
+#  PHP / Laravel helpers                                               #
+# ------------------------------------------------------------------ #
+
+def find_php_executable() -> Optional[str]:
+    """Return the path to the php CLI binary, or None if not found."""
+    import shutil
+    return shutil.which("php")
+
+
+def find_composer_executable() -> Optional[str]:
+    """Return the path to the composer binary, or None if not found."""
+    import shutil
+    for name in ("composer", "composer.phar"):
+        found = shutil.which(name)
+        if found:
+            return found
+    return None
+
+
+def is_laravel_project(project_path) -> bool:
+    """Return True when *project_path* looks like a Laravel project."""
+    project_path = Path(project_path)
+    return (project_path / "artisan").exists()
+
+
+def is_php_project(project_path) -> bool:
+    """Return True when *project_path* contains at least one PHP file."""
+    project_path = Path(project_path)
+    return any(project_path.rglob("*.php"))
+
+
+def detect_project_type(project_path) -> str:
+    """Guess the project type from the folder contents.
+
+    Priority: django > laravel > php > django (fallback).
+    """
+    project_path = Path(project_path)
+    if (project_path / "manage.py").exists():
+        return "django"
+    if is_laravel_project(project_path):
+        return "laravel"
+    if is_php_project(project_path):
+        return "php"
+    return "django"
+
+
+def build_php_activation_script(
+    project_path,
+    php_executable: str,
+    host: str,
+    port: int,
+    project_type: str,
+) -> Optional[str]:
+    """Write a .bat launcher for a PHP/Laravel dev server (Windows only)."""
+    if os.name != "nt":
+        return None
+
+    project_path = Path(project_path)
+
+    script_handle = tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".bat",
+        prefix="projecthub_php_",
+        delete=False,
+        newline="\r\n",
+    )
+
+    script_handle.write("@echo off\r\n")
+
+    if project_type == "laravel":
+        artisan = project_path / "artisan"
+        script_handle.write(
+            f'"{php_executable}" "{artisan}" serve --host={host} --port={port}\r\n'
+        )
+    else:
+        # Plain PHP built-in web server
+        script_handle.write(
+            f'"{php_executable}" -S {host}:{port} -t "{project_path}"\r\n'
+        )
+
+    script_handle.close()
     return script_handle.name
 
 

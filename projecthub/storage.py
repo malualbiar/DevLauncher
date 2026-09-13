@@ -63,6 +63,7 @@ def load_projects(
                     auto_open_browser=bool(
                         item.get("auto_open_browser", True)
                     ),
+                    project_type=str(item.get("project_type", "django")),
                     status="Stopped",
                     last_log=str(item.get("last_log", "")),
                 )

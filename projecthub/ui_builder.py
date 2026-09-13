@@ -132,7 +132,7 @@ class UIBuilderMixin:
             "QLabel { font-size: 28px; font-weight: 700; color: #edf3ff; }"
         )
 
-        subtitle = QLabel("Django Development Server Manager")
+        subtitle = QLabel("Development Server Manager  ·  Django · Laravel · PHP")
         subtitle.setStyleSheet("QLabel { color: #8ea2c7; font-size: 13px; }")
 
         title_layout.addWidget(title)
@@ -180,9 +180,9 @@ class UIBuilderMixin:
 
     def _build_table(self):
         self.table = QTableWidget()
-        self.table.setColumnCount(6)
+        self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels(
-            ["Project", "Path", "Port", "Status", "URL", "Actions"]
+            ["Project", "Path", "Type", "Port", "Status", "URL", "Actions"]
         )
 
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -218,13 +218,17 @@ class UIBuilderMixin:
         )
 
         header_view = self.table.horizontalHeader()
+        header_view.setMinimumSectionSize(10)
         header_view.setSectionResizeMode(0, QHeaderView.ResizeToContents)
         header_view.setSectionResizeMode(1, QHeaderView.Stretch)
         header_view.setSectionResizeMode(2, QHeaderView.ResizeToContents)
         header_view.setSectionResizeMode(3, QHeaderView.ResizeToContents)
         header_view.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         header_view.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        header_view.setSectionResizeMode(6, QHeaderView.Fixed)
+        header_view.resizeSection(6, 160)
 
+        self.table.verticalHeader().setDefaultSectionSize(42)
         self.table.itemSelectionChanged.connect(self.update_button_states)
         self.table.doubleClicked.connect(self.table_double_click)
 
@@ -326,6 +330,15 @@ class UIBuilderMixin:
         self.project_grid.setColumnStretch(2, 1)
         self.project_grid.setColumnStretch(3, 1)
 
+    def _project_type_badge(self, project):
+        """Return a dict with 'text' and 'color' for the project type badge."""
+        project_type = getattr(project, "project_type", "django")
+        return {
+            "django":  {"text": "Django",  "color": "#60a5fa"},
+            "laravel": {"text": "Laravel", "color": "#f472b6"},
+            "php":     {"text": "PHP",     "color": "#a78bfa"},
+        }.get(project_type, {"text": project_type.capitalize(), "color": "#94a3b8"})
+
     def _project_status_color(self, project):
         return {
             "Running": "#34d399",
@@ -370,6 +383,7 @@ class UIBuilderMixin:
         card_layout.setSpacing(6)
 
         status_color = self._project_status_color(project)
+        type_badge = self._project_type_badge(project)
 
         hash_value = hashlib.sha1(project.name.encode("utf-8")).hexdigest()
 
@@ -402,6 +416,12 @@ class UIBuilderMixin:
 
         text_col = QVBoxLayout()
         text_col.addWidget(name_label)
+        badge_label = QLabel(type_badge["text"])
+        badge_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        badge_label.setStyleSheet(
+            f"QLabel {{ color: {type_badge['color']}; font-size: 10px; font-weight: 600; background: transparent; }}"
+        )
+        text_col.addWidget(badge_label)
 
         actions = QHBoxLayout()
         actions.setSpacing(8)
